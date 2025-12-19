@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>REGIONAL SYSTEM - MVP BASE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { 
+            --glass: rgba(255, 255, 255, 0.12); 
+            --glass-border: rgba(255, 255, 255, 0.2); 
+            --card-glass: rgba(255, 255, 255, 0.6);
+        }
+        
+        #login-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            display: flex; align-items: center; justify-content: center; z-index: 9999; 
+        }
+        .login-box { 
+            background: var(--glass); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); 
+            border: 1px solid var(--glass-border); padding: 40px; border-radius: 20px; 
+            text-align: center; color: white; width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); 
+        }
+        .input-glass { 
+            width: 100%; padding: 12px; margin: 10px 0; background: rgba(255,255,255,0.1); 
+            border: 1px solid var(--glass-border); border-radius: 8px; color: white; outline: none; box-sizing: border-box; 
+        }
+        .btn-entrar { 
+            width: 100%; padding: 12px; margin-top: 20px; background: #4facfe; 
+            border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; 
+        }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); 
+            margin: 0; padding: 20px; min-height: 100vh;
+        }
+        .container { 
+            max-width: 1450px; margin: auto; 
+            background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 25px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+        }
+        .card { 
+            background: var(--card-glass); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 10px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid rgba(0,0,0,0.05); padding-bottom: 15px; }
+        .btn-group { display: flex; gap: 8px; }
+        .btn-min { padding: 5px 10px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #ddd; background: white; transition: 0.2s; }
+        .btn-excel { color: #27ae60; border-color: #27ae60; }
+        .btn-pdf { color: #c0392b; border-color: #c0392b; }
+        .main-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 3px solid #34495e; }
+        .tab-btn { padding: 12px 25px; border: none; background: #dfe4ea; cursor: pointer; font-weight: bold; border-radius: 8px 8px 0 0; }
+        .tab-btn.active { background: #34495e; color: white; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card h3 { margin-top: 0; color: #2c3e50; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; font-size: 15px; }
+        .stat-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin: 10px 0 5px 0; font-size: 13px; align-items: center; }
+        .stat-val { font-weight: bold; color: #2c3e50; text-align: right; min-width: 90px; }
+        .stat-perc { font-weight: bold; color: #7f8c8d; text-align: right; width: 45px; }
+        .percentage-bar { background: rgba(0,0,0,0.05); height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+        .bar-fill { height: 100%; background: #3498db; }
+        .regional-selector { display: flex; gap: 5px; margin-bottom: 15px; }
+        .reg-btn { padding: 8px 15px; border: 1px solid #34495e; background: white; cursor: pointer; font-size: 12px; border-radius: 4px; }
+        .reg-btn.active { background: #34495e; color: white; }
+        .inputs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; background: rgba(0,0,0,0.03); padding: 15px; border-radius: 8px; border: 1px solid #dee2e6; margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; color: #555; }
+        .input-group input, .input-group select { width: 100%; padding: 7px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        th { background: #34495e; color: white; padding: 10px; text-transform: uppercase; }
+        td { border: 1px solid #dee2e6; padding: 8px; text-align: center; }
+        .row-label { text-align: left; font-weight: bold; background: rgba(0,0,0,0.02); min-width: 170px; }
+        .bg-blue { background: #34495e !important; color: white !important; font-weight: bold; }
+        .sugestao-cell { background: #e8f8f5; font-weight: bold; color: #1b5e20; }
+        .input-table { width: 45px; padding: 3px; text-align: center; border: 1px solid #3498db; border-radius: 3px; }
+        .input-promo { background: #fffde7; border: 1px solid #fbc02d; font-weight: bold; color: #f57f17; }
+        .dde-ok { color: #27ae60; font-weight: bold; }
+        .dde-excesso { color: #e74c3c; font-weight: bold; }
+        .dde-consolidado { color: #2c3e50; font-weight: bold; background: #f4f7f6; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+<div id="login-overlay">
+    <div class="login-box">
+        <h2 style="font-weight: 300; letter-spacing: 2px;">REGIONAL SYSTEM</h2>
+        <input type="text" id="userInput" class="input-glass" placeholder="Usuário">
+        <input type="password" id="passInput" class="input-glass" placeholder="Senha">
+        <button class="btn-entrar" onclick="autenticar()">ENTRAR</button>
+        <p id="errorMsg" style="color: #ff6b6b; font-size: 11px; margin-top: 15px; display: none;">Credenciais Inválidas</p>
+    </div>
+</div>
+
+<div id="main-app" class="hidden">
+    <div id="conteudo-para-pdf" class="container">
+        <div class="header-top">
+            <div>
+                <h1 style="margin:0; font-size: 19px; color: #2c3e50;">Planejamento Estratégico Regional | <span id="displayUser">ADMIN</span></h1>
+                <div id="data-atual" style="font-size: 11px; color: #888;"></div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-min" onclick="location.reload()" style="color:#e74c3c">SAIR</button>
+                <button class="btn-min btn-excel" onclick="exportarExcel()">💾 EXCEL</button>
+                <button class="btn-min btn-pdf" onclick="gerarPDF()">📄 PDF</button>
+            </div>
+        </div>
+        <div class="main-tabs">
+            <button id="btnTabPainel" class="tab-btn active" onclick="showTab('painel')">PAINEL (CONSOLIDADO)</button>
+            <button id="btnTabRegional" class="tab-btn" onclick="showTab('regional')">REGIONAL</button>
+        </div>
+        
+        <div id="tabPainel">
+            <div id="cardsContainer" class="dashboard-grid"></div>
+            <div class="table-wrapper">
+                <h3 style="color:#34495e; font-size: 16px;">CONSOLIDADO TOTAL DA OPERAÇÃO</h3>
+                <table id="tabelaConsolidada"></table>
+            </div>
+        </div>
+
+        <div id="tabRegional" class="hidden">
+            <div class="regional-selector" id="regSelectorContainer">
+                <button class="reg-btn active" onclick="mudarRegional('NORTE')">NORTE</button>
+                <button class="reg-btn" onclick="mudarRegional('NORDESTE')">NORDESTE</button>
+                <button class="reg-btn" onclick="mudarRegional('CENTRO OESTE')">CENTRO OESTE</button>
+                <button class="reg-btn" onclick="mudarRegional('SUDESTE')">SUDESTE</button>
+                <button class="reg-btn" onclick="mudarRegional('HIPERMERCADO')">HIPERMERCADO</button>
+            </div>
+            <h2 id="tituloRegional" style="font-size: 18px; color: #2c3e50;">REGIONAL NORTE</h2>
+            <div class="inputs-grid">
+                <div class="input-group"><label>Modo Sell Out:</label><select id="tipoEntrada" onchange="salvar()"><option value="anual">Sell Out Anual</option><option value="mensal">Sell Out Mensal</option></select></div>
+                <div class="input-group"><label>Sell out (Unid):</label><input type="number" id="vendaInput" oninput="salvar()"></div>
+                <div class="input-group"><label>Estoque Inicial:</label><input type="number" id="estInicial" oninput="salvar()"></div>
+                <div class="input-group"><label>Net Price médio:</label><input type="number" id="netPrice" oninput="salvar()"></div>
+                <div class="input-group"><label>DDE Cobertura:</label><input type="number" id="metaDDE" oninput="replicarDDE()"></div>
+                <div class="input-group">
+                    <label>Mês:</label>
+                    <select id="mesInicio" onchange="salvar()">
+                        <option value="-1">Base (Pré-Jan)</option>
+                        <option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option>
+                        <option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option>
+                        <option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option>
+                        <option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-wrapper"><table id="tabelaRegional"></table></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let abaAtiva = 'painel';
+let regionalAtiva = 'NORTE';
+const regioes = ["NORTE", "NORDESTE", "CENTRO OESTE", "SUDESTE", "HIPERMERCADO"];
+const mesesNomes = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const fR = (v) => v.toLocaleString('pt-BR', {style:'currency', currency:'BRL', maximumFractionDigits:0});
+let dados = {};
+
+regioes.forEach(r => {
+    dados[r] = {
+        mesIn: -1, tipo: 'anual', vendaVal: 5000, est: 2800, price: 150, dde: 90,
+        pesos: [8.3, 6.0, 6.9, 7.1, 8.9, 7.1, 7.6, 8.0, 8.7, 8.7, 12.4, 10.3],
+        metasDDE: Array(12).fill(90),
+        promo: Array(12).fill('')
+    };
+});
+
+function autenticar() {
+    const u = document.getElementById('userInput').value.toLowerCase();
+    const p = document.getElementById('passInput').value;
+    if((u === 'admin' || u === 'norte') && p === '123') {
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('displayUser').innerText = u.toUpperCase();
+        if(u === 'norte') {
+            regionalAtiva = 'NORTE';
+            document.getElementById('btnTabPainel').classList.add('hidden');
+            document.getElementById('regSelectorContainer').classList.add('hidden');
+            showTab('regional');
+        } else {
+            showTab('painel');
+        }
+        carregarCampos();
+    } else {
+        document.getElementById('errorMsg').style.display = 'block';
+    }
+}
+
+function processarTudo() {
+    let consol = { out: Array(12).fill(0), in: Array(12).fill(0), net: Array(12).fill(0), est: Array(12).fill(0), totalOut: 0, totalIn: 0, totalNet: 0 };
+    let stats = [];
+    regioes.forEach(reg => {
+        let d = dados[reg];
+        let volumeReferenciaAnual = (d.tipo === 'mensal') ? (d.vendaVal * 12) : d.vendaVal;
+        let vMensal = d.pesos.map((p, i) => {
+            if (d.promo[i] !== '' && d.promo[i] !== null) return parseFloat(d.promo[i]);
+            return Math.round((volumeReferenciaAnual * p) / 100);
+        });
+        let estCorr = d.est;
+        let rOut=0, rIn=0, rNet=0;
+        let regData = { out:[], in:[], netS:[], est:[], ddeR:[], metasRef: d.metasDDE, somaP: parseFloat(d.pesos.reduce((a, b) => a + b, 0).toFixed(2)) };
+        
+        for(let i=0; i<12; i++) {
+            if(i <= d.mesIn) { 
+                regData.out.push(0); regData.in.push(0); regData.netS.push(0); regData.est.push(i===d.mesIn?d.est:0); regData.ddeR.push(0);
+                if(i===d.mesIn) { estCorr = d.est; consol.est[i] += d.est; }
+                continue; 
+            }
+            let vD = vMensal[i]/30;
+            let alvo = Math.round(vD * d.metasDDE[i]);
+            let compra = Math.max(0, (alvo + vMensal[i]) - estCorr);
+            let valNet = compra * d.price;
+
+            regData.out.push(vMensal[i]); regData.in.push(compra); regData.netS.push(valNet);
+            estCorr = estCorr + compra - vMensal[i];
+            regData.est.push(estCorr); 
+            regData.ddeR.push(vD > 0 ? Math.round(estCorr / vD) : 0);
+            
+            consol.out[i] += vMensal[i]; consol.in[i] += compra; consol.net[i] += valNet;
+            consol.est[i] += estCorr;
+            rOut += vMensal[i]; rIn += compra; rNet += valNet;
+        }
+        stats.push({nome: reg, out: rOut, in: rIn, net: rNet});
+        if(reg === regionalAtiva) renderTabelaRegional(regData);
+    });
+    consol.totalOut = consol.out.reduce((a,b)=>a+b,0);
+    consol.totalIn = consol.in.reduce((a,b)=>a+b,0);
+    consol.totalNet = consol.net.reduce((a,b)=>a+b,0);
+    renderTabelaConsolidada(consol);
+    renderCards(stats, consol);
+}
+
+function renderTabelaRegional(rd) {
+    let d = dados[regionalAtiva];
+    let corSoma = (rd.somaP === 100) ? 'background: #27ae60; color: white;' : 'background: #e74c3c; color: white;';
+    let h = `<thead><tr><th>Métrica</th>${mesesNomes.map(m=>`<th>${m}</th>`).join('')}<th style="${corSoma}">TOTAL</th></tr></thead><tbody>`;
+    h += `<tr><td class="row-label">Peso Sazonal Sell out (%)</td>${d.pesos.map((p,i)=>`<td><input class="input-table" value="${p}" onchange="atualizarPeso(${i},this.value)">%</td>`).join('')} <td style="${corSoma}">${rd.somaP}%</td></tr>`;
+    h += `<tr><td class="row-label" style="color:#f57f17">Sell Out Promo (Manual)</td>${d.promo.map((v,i)=>`<td><input class="input-table input-promo" value="${v}" placeholder="-" onchange="atualizarPromo(${i},this.value)"></td>`).join('')}<td class="bg-blue">-</td></tr>`;
+    h += `<tr><td class="row-label">Meta DDE Cobertura</td>${d.metasDDE.map((m,i)=>`<td><input class="input-table" value="${m}" onchange="atualizarDDE(${i},this.value)"></td>`).join('')}<td class="bg-blue">-</td></tr>`;
+    h += `<tr><td class="row-label">Sell Out (Unid)</td>${rd.out.map(v=>`<td>${v}</td>`).join('')}<td class="bg-blue">${rd.out.reduce((a,b)=>a+b,0)}</td></tr>`;
+    h += `<tr><td class="row-label sugestao-cell">Sugestão Sell In qtd </td>${rd.in.map(v=>`<td class="sugestao-cell">${v}</td>`).join('')}<td class="bg-blue">${rd.in.reduce((a,b)=>a+b,0)}</td></tr>`;
+    h += `<tr><td class="row-label" style="background:#f0f4f8">Net Sales Projetado (R$)</td>${rd.netS.map(v=>`<td style="font-size:10px">${v > 0 ? fR(v) : '-'}</td>`).join('')}<td class="bg-blue">${fR(rd.netS.reduce((a,b)=>a+b,0))}</td></tr>`;
+    h += `<tr><td class="row-label">Estoque Projetado</td>${rd.est.map(v=>`<td>${v}</td>`).join('')}<td class="bg-blue">-</td></tr>`;
+    h += `<tr><td class="row-label">DDE Real (Dias)</td>`;
+    rd.ddeR.forEach((v, i) => {
+        let meta = rd.metasRef[i];
+        let classe = v > meta ? 'dde-excesso' : 'dde-ok';
+        h += `<td class="${classe}">${v || '-'}</td>`;
+    });
+    h += `<td class="bg-blue">-</td></tr></tbody>`;
+    document.getElementById('tabelaRegional').innerHTML = h;
+}
+
+function renderCards(stats, total) {
+    let html = '';
+    const metrics = [
+        {l:'Sell Out (Unid)', k:'out', t:'totalOut', fmt: v => v.toLocaleString('pt-BR')}, 
+        {l:'Sell In (Unid)', k:'in', t:'totalIn', fmt: v => v.toLocaleString('pt-BR')}, 
+        {l:'Net Sales (R$)', k:'net', t:'totalNet', fmt: v => fR(v)}
+    ];
+    metrics.forEach(m => {
+        html += `<div class="card"><h3>${m.l}</h3>`;
+        stats.forEach(s => {
+            let part = total[m.t] > 0 ? (s[m.k] / total[m.t] * 100).toFixed(1) : 0;
+            html += `<div class="stat-row"><span>${s.nome}</span><span class="stat-val">${m.fmt(s[m.k])}</span><span class="stat-perc">${part}%</span></div><div class="percentage-bar"><div class="bar-fill" style="width:${part}%"></div></div>`;
+        });
+        html += `</div>`;
+    });
+    document.getElementById('cardsContainer').innerHTML = html;
+}
+
+function renderTabelaConsolidada(c) {
+    let h = `<thead><tr><th>Métrica</th>${mesesNomes.map(m=>`<th>${m}</th>`).join('')}<th class="bg-blue">TOTAL</th></tr></thead><tbody>`;
+    h += `<tr><td class="row-label">Sell Out Consolidado</td>${c.out.map(v=>`<td>${v||'-'}</td>`).join('')}<td class="bg-blue">${c.totalOut}</td></tr>`;
+    h += `<tr><td class="row-label sugestao-cell">Sugestão Sell In</td>${c.in.map(v=>`<td class="sugestao-cell">${v||'-'}</td>`).join('')}<td class="bg-blue">${c.totalIn}</td></tr>`;
+    h += `<tr><td class="row-label" style="background:#f0f4f8">Net Sales Total (R$)</td>${c.net.map(v=>`<td style="font-size:10px">${v > 0 ? fR(v) : '-'}</td>`).join('')}<td class="bg-blue">${fR(c.totalNet)}</td></tr>`;
+    h += `<tr><td class="row-label dde-consolidado">DDE Grupo (Dias)</td>`;
+    c.est.forEach((estT, i) => {
+        let giroD = c.out[i] / 30;
+        let ddeC = giroD > 0 ? Math.round(estT / giroD) : 0;
+        h += `<td class="dde-consolidado">${ddeC || '-'}</td>`;
+    });
+    h += `<td class="bg-blue">-</td></tr></tbody>`;
+    document.getElementById('tabelaConsolidada').innerHTML = h;
+}
+
+function showTab(aba) {
+    abaAtiva = aba;
+    document.getElementById('tabPainel').classList.toggle('hidden', aba !== 'painel');
+    document.getElementById('tabRegional').classList.toggle('hidden', aba !== 'regional');
+    document.getElementById('btnTabPainel').classList.toggle('active', aba === 'painel');
+    document.getElementById('btnTabRegional').classList.toggle('active', aba === 'regional');
+    processarTudo();
+}
+
+function mudarRegional(reg) {
+    regionalAtiva = reg;
+    document.querySelectorAll('.reg-btn').forEach(b => b.classList.toggle('active', b.innerText === reg));
+    document.getElementById('tituloRegional').innerText = "AJUSTES: " + reg;
+    carregarCampos();
+}
+
+function carregarCampos() {
+    let d = dados[regionalAtiva];
+    document.getElementById('mesInicio').value = d.mesIn;
+    document.getElementById('tipoEntrada').value = d.tipo;
+    document.getElementById('vendaInput').value = d.vendaVal;
+    document.getElementById('estInicial').value = d.est;
+    document.getElementById('netPrice').value = d.price;
+    document.getElementById('metaDDE').value = d.dde;
+    processarTudo();
+}
+
+function salvar() {
+    let d = dados[regionalAtiva];
+    d.mesIn = parseInt(document.getElementById('mesInicio').value);
+    d.tipo = document.getElementById('tipoEntrada').value;
+    d.vendaVal = parseFloat(document.getElementById('vendaInput').value) || 0;
+    d.est = parseFloat(document.getElementById('estInicial').value) || 0;
+    d.price = parseFloat(document.getElementById('netPrice').value) || 0;
+    d.dde = parseFloat(document.getElementById('metaDDE').value) || 0;
+    document.getElementById('data-atual').innerText = "Atualizado em: " + new Date().toLocaleString();
+    processarTudo();
+}
+
+function replicarDDE() {
+    let valor = parseFloat(document.getElementById('metaDDE').value) || 0;
+    dados[regionalAtiva].metasDDE = Array(12).fill(valor);
+    salvar();
+}
+
+function atualizarPeso(i, v) { dados[regionalAtiva].pesos[i] = parseFloat(v) || 0; processarTudo(); }
+function atualizarDDE(i, v) { dados[regionalAtiva].metasDDE[i] = parseFloat(v) || 0; processarTudo(); }
+function atualizarPromo(i, v) { 
+    dados[regionalAtiva].promo[i] = v === '' ? '' : parseFloat(v); 
+    processarTudo(); 
+}
+
+function gerarPDF() {
+    html2pdf().set({ margin: 5, filename: 'Relatorio_Agro.pdf', html2canvas: { scale: 2, windowWidth: 1500 }, jsPDF: { orientation: 'landscape' } }).from(document.getElementById('conteudo-para-pdf')).save();
+}
+
+function exportarExcel() {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(document.getElementById('tabelaConsolidada')), "Consolidado");
+    XLSX.writeFile(wb, "Planejamento_Agro.xlsx");
+}
+</script>
+</body>
+</html>
